@@ -8,9 +8,12 @@ import crypto from "crypto";
 import { sendEmail } from "../utils/sendEmail.js";
 
 const cookieOption = {
-  maxAge: 7 * 24 * 60 * 60 * 1000,
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 din
   httpOnly: true,
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  secure: process.env.NODE_ENV === "production" ? true : false,
 };
+
 
 const register = async (req,res,next) => {
     const {name,email,password}=req.body

@@ -14,9 +14,16 @@ const userSchema = new Schema({
     required: true,
   },
   password: {
-    type: String,
-    required: true,
+  type: String,
+  required: function() {
+    return !this.isGoogleUser; // agar google user hai to password required na ho
   },
+},
+isGoogleUser: {
+  type: Boolean,
+  default: false,
+}
+,
   avatar: {
     public_id: {
       type: String,

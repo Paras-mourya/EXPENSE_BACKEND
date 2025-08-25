@@ -13,6 +13,10 @@ import errorMiddleware from "./middleware/error.middleware.js";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
 
+// 👇 ADD THESE 2 IMPORTS
+import passport from "passport";
+import "./config/passport.js"; // ✅ yahan se strategy load hogi
+
 dotenv.config();
 connectDB();
 
@@ -28,7 +32,6 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: function (origin, callback) {
-      // allow requests with no origin (like mobile apps, Postman)
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -39,9 +42,13 @@ app.use(
   })
 );
 
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(morgan("dev"));
+
+// ✅ Initialize passport
+app.use(passport.initialize());
 
 // ✅ Cloudinary config
 cloudinary.v2.config({
