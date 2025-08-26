@@ -10,11 +10,14 @@ import {
 
 const router = express.Router();
 
+// Static route FIRST
+router.get("/summary", getSummary);
+
+// Then others
 router.get("/", getTransactions);
-router.get("/:id", getTransactionById);
 router.post("/", createTransaction);
+router.get("/:id", getTransactionById);
 router.put("/:id", updateTransaction);
 router.delete("/:id", deleteTransaction);
-router.get("/summary", getSummary);
 
 export default router;

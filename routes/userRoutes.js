@@ -1,32 +1,38 @@
 import { Router } from "express";
-import { forgotPassword, getProfile, login, logout, register, resetPassword, updateProfile } from "../controllers/userController.js";
+import {
+  forgotPassword,
+  getProfile,
+  login,
+  logout,
+  register,
+  resetPassword,
+  updateProfile,
+} from "../controllers/userController.js";
 import { upload } from "../middleware/multer.middleware.js";
 import passport from "passport";
 import { isLoggedIn } from "../middleware/auth.middleware.js";
-const router =Router()
 
+const router = Router();
 
-router.post('/register',register)
-router.post('/login',login)
-router.get('/logout',logout)
-router.get('/me',isLoggedIn,getProfile)
+// Auth & Profile
+router.post("/register", register);
+router.post("/login", login);
+router.get("/logout", logout);
+router.get("/me", isLoggedIn, getProfile);
 
-router.put("/update",isLoggedIn, upload.single("avatar"), updateProfile);
+// Update Profile
+router.put("/update", isLoggedIn, upload.single("avatar"), updateProfile);
 
-router.post('/reset',forgotPassword)
-router.post('/reset/:resetToken',resetPassword)
+// Password Reset
+router.post("/reset", forgotPassword);
+router.post("/reset/:resetToken", resetPassword);
 
-
-
-// Google Login start
-// Google Login start
-// google login
+// Google OAuth
 router.get(
   "/auth/google",
   passport.authenticate("google", { scope: ["profile", "email"] })
 );
 
-// callback
 router.get(
   "/auth/google/callback",
   passport.authenticate("google", { session: false, failureRedirect: "/" }),
@@ -38,11 +44,9 @@ router.get(
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    // ✅ Google login ke baad frontend dashboard pe bhej do
+    // ✅ Redirect to frontend dashboard
     res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
   }
 );
 
-
-
-export default router
+export default router;
