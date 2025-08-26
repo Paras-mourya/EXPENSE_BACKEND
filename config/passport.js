@@ -11,20 +11,23 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: process.env.GOOGLE_CALLBACK_URL,
+      callbackURL:
+        process.env.NODE_ENV === "production"
+          ? process.env.GOOGLE_CALLBACK_URL
+          : process.env.GOOGLE_CALLBACK_URL_LOCAL,
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        // Check if user exists
+        // ✅ check if user already exists
         let user = await User.findOne({ email: profile.emails[0].value });
 
         if (!user) {
-          // create new user
+          // ✅ create new user
           user = await User.create({
             name: profile.displayName,
             email: profile.emails[0].value,
             password: "google-oauth", // dummy password
-            isGoogleUser: true,       // ✅ mark google users
+            isGoogleUser: true,       // mark google users
             avatar: {
               secure_url: profile.photos[0]?.value,
             },
