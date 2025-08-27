@@ -1,12 +1,10 @@
 import Expense from "../models/Expense.js";
 import AppError from "../utils/error.utils.js";
 
-// 📊 1. Monthly Comparison (Graph)
+
 export const getExpensesComparison = async (req, res, next) => {
   try {
     const thisYear = new Date().getFullYear();
-
-    // STEP 1: Extract month & year explicitly
     const expenses = await Expense.aggregate([
       {
         $project: {
@@ -23,9 +21,9 @@ export const getExpensesComparison = async (req, res, next) => {
       },
     ]);
 
-    console.log("📌 Aggregated Expenses:", expenses);
+    console.log(" Aggregated Expenses:", expenses);
 
-    // STEP 2: Build Jan–Dec response
+    
     const result = Array.from({ length: 12 }, (_, i) => {
       const thisMonth = expenses.find(
         (e) => Number(e._id.month) === i + 1 && Number(e._id.year) === thisYear
@@ -47,7 +45,7 @@ export const getExpensesComparison = async (req, res, next) => {
   }
 };
 
-// 📂 2. Expenses Breakdown (Category-wise)
+
 export const getExpensesBreakdown = async (req, res, next) => {
   try {
     const current = await Expense.aggregate([
@@ -69,7 +67,7 @@ export const getExpensesBreakdown = async (req, res, next) => {
         return {
           category: cat,
           total: catTotal,
-          changePercent: 0, // skip for now
+          changePercent: 0, 
           items,
         };
       })

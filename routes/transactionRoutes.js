@@ -10,10 +10,10 @@ import {
 
 const router = express.Router();
 
-// Static route FIRST
+
 router.get("/summary", getSummary);
 
-// Then others
+
 router.get("/", getTransactions);
 router.post("/", createTransaction);
 router.get("/:id", getTransactionById);

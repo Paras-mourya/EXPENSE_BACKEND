@@ -20,14 +20,12 @@ router.post("/login", login);
 router.get("/logout", logout);
 router.get("/me", isLoggedIn, getProfile);
 
-// Update Profile
+
 router.put("/update", isLoggedIn, upload.single("avatar"), updateProfile);
 
-// Password Reset
+
 router.post("/reset", forgotPassword);
 router.post("/reset/:resetToken", resetPassword);
-
-// Google OAuth
 router.get(
   "/auth/google",
   passport.authenticate("google", { scope: ["profile", "email"] })
@@ -44,7 +42,7 @@ router.get(
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    // ✅ Redirect to frontend dashboard
+    
     res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
   }
 );

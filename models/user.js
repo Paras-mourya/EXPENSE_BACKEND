@@ -16,7 +16,7 @@ const userSchema = new Schema({
   password: {
   type: String,
   required: function() {
-    return !this.isGoogleUser; // agar google user hai to password required na ho
+    return !this.isGoogleUser; 
   },
 },
 isGoogleUser: {
@@ -70,7 +70,7 @@ userSchema.methods.generatePasswordResetToken = async function () {
     .update(resetToken)
     .digest("hex");
 
-  this.forgotPasswordExpiry = Date.now() + 15 * 60 * 1000; // 15 min
+  this.forgotPasswordExpiry = Date.now() + 15 * 60 * 1000;
 
   return resetToken;
 };

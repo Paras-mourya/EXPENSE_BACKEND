@@ -1,8 +1,6 @@
-// ----------------- Load env first -----------------
 import dotenv from "dotenv";
 dotenv.config();
 
-// ----------------- Core modules -----------------
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -10,13 +8,10 @@ import morgan from "morgan";
 import cloudinary from "cloudinary";
 import passport from "passport";
 
-// ----------------- DB -----------------
 import connectDB from "./config/db.js";
 
-// ----------------- Passport Config -----------------
-import "./config/passport.js";   // 👈 Google strategy load ho jaayegi
 
-// ----------------- Routes -----------------
+import "./config/passport.js";
 import transactionRoutes from "./routes/transactionRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import accountRoutes from "./routes/accountRoutes.js";
@@ -24,27 +19,26 @@ import billRoutes from "./routes/billRoutes.js";
 import goalRoutes from "./routes/goalRoutes.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
 
-// ----------------- Middleware -----------------
 import errorMiddleware from "./middleware/error.middleware.js";
 
-// ----------------- Connect DB -----------------
+
 connectDB();
 
 const app = express();
 
-/* ----------------- CORS Config ----------------- */
+
 const allowedOrigins = [
-  process.env.FRONTEND_URL,        // deployed frontend (env)
-  process.env.FRONTEND_URL_LOCAL,  // local frontend (env)
-  "http://localhost:3000",         // fallback local
-  "https://expense-frontend-e4v6.vercel.app", // fallback vercel
+  process.env.FRONTEND_URL,        
+  process.env.FRONTEND_URL_LOCAL, 
+  "http://localhost:3000",         
+  "https://expense-frontend-e4v6.vercel.app", 
 ];
 
 const vercelRegex = /^https:\/\/.*\.vercel\.app$/;
 
-// ✅ Debug incoming request origin
+
 app.use((req, res, next) => {
-  console.log("👉 Incoming request:");
+  console.log(" Incoming request:");
   console.log("   Origin:", req.headers.origin);
   console.log("   Path:", req.path);
   next();
@@ -54,23 +48,23 @@ app.use(
   cors({
     origin: function (origin, callback) {
       if (
-        !origin || // Postman / server-to-server
+        !origin || 
         allowedOrigins.includes(origin) ||
         (origin && vercelRegex.test(origin))
       ) {
         return callback(null, true);
       }
-      console.log("❌ Blocked by CORS:", origin);
+      console.log(" Blocked by CORS:", origin);
       return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
   })
 );
 
-// ✅ Preflight request allow karo
+
 app.options("*", cors());
 
-// ✅ Force CORS headers (backup)
+
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
   res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
@@ -82,20 +76,17 @@ app.use((req, res, next) => {
   next();
 });
 
-/* ----------------- Common middleware ----------------- */
+
 app.use(express.json());
 app.use(cookieParser());
-app.use(morgan("dev"));
-app.use(passport.initialize());  // ✅ initialize after strategy import
-
-/* ----------------- Cloudinary ----------------- */
+app.use(morgan("dev")); 
 cloudinary.v2.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-/* ----------------- Routes ----------------- */
+
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/accounts", accountRoutes);
@@ -103,10 +94,10 @@ app.use("/api/bills", billRoutes);
 app.use("/api/goals", goalRoutes);
 app.use("/api/expenses", expenseRoutes);
 
-/* ----------------- Error middleware (last) ----------------- */
+
 app.use(errorMiddleware);
 
-/* ----------------- Server ----------------- */
+
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
