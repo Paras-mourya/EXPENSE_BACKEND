@@ -26,8 +26,7 @@ passport.use(
           user = await User.create({
             name: profile.displayName,
             email: profile.emails[0].value,
-            password: "google-oauth", 
-            isGoogleUser: true,       
+            isGoogleUser: true,
             avatar: {
               secure_url: profile.photos[0]?.value,
             },

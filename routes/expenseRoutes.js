@@ -1,12 +1,24 @@
 import { Router } from "express";
 import {
-  getExpensesBreakdown,
+  createExpense,
+  getExpenses,
+  getExpenseById,
+  updateExpense,
+  deleteExpense,
   getExpensesComparison,
+  getExpensesBreakdown,
 } from "../controllers/expenseController.js";
+import { isLoggedIn } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
-router.get("/comparison", getExpensesComparison);
-router.get("/breakdown", getExpensesBreakdown);
+router.post("/", isLoggedIn, createExpense);
+router.get("/", isLoggedIn, getExpenses);
+router.get("/:id", isLoggedIn, getExpenseById);
+router.put("/:id", isLoggedIn, updateExpense);
+router.delete("/:id", isLoggedIn, deleteExpense);
+
+router.get("/analytics/comparison", isLoggedIn, getExpensesComparison);
+router.get("/analytics/breakdown", isLoggedIn, getExpensesBreakdown);
 
 export default router;

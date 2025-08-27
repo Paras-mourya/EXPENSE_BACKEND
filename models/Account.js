@@ -22,11 +22,17 @@ const accountSchema = new Schema(
       type: Number,
       default: 0,
     },
+   
+ user: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-const Account = model("Account",accountSchema)
-export default Account
+const Account = model("Account", accountSchema);
+export default Account;

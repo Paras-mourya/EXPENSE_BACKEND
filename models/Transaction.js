@@ -2,17 +2,21 @@ import mongoose from "mongoose";
 
 const transactionSchema = new mongoose.Schema(
   {
-    title: { type: String, required: true },
+    title: { type: String },
     shop: { type: String },
-    date: { type: Date, required: true },
+    date: { type: Date },
     method: {
       type: String,
       enum: ["Credit Card", "Debit Card", "Cash", "Bank Transfer"],
+    },
+    type: { type: String, enum: ["income", "expense"] },
+    category: { type: String },
+    amount: { type: Number },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
       required: true,
     },
-    type: { type: String, enum: ["income", "expense"], required: true },
-    category: { type: String },
-    amount: { type: Number, required: true },
     status: {
       type: String,
       enum: ["Pending", "Complete"],

@@ -7,17 +7,17 @@ import {
   getSummary,
   getTransactionById,
 } from "../controllers/transactionController.js";
+import { isLoggedIn } from "../middleware/auth.middleware.js"; 
 
 const router = express.Router();
 
 
-router.get("/summary", getSummary);
+router.get("/summary", isLoggedIn, getSummary);
 
-
-router.get("/", getTransactions);
-router.post("/", createTransaction);
-router.get("/:id", getTransactionById);
-router.put("/:id", updateTransaction);
-router.delete("/:id", deleteTransaction);
+router.get("/", isLoggedIn, getTransactions);
+router.post("/", isLoggedIn, createTransaction);
+router.get("/:id", isLoggedIn, getTransactionById);
+router.put("/:id", isLoggedIn, updateTransaction);
+router.delete("/:id", isLoggedIn, deleteTransaction);
 
 export default router;

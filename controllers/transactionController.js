@@ -2,97 +2,144 @@ import Transaction from "../models/Transaction.js";
 import Account from "../models/Account.js";
 import AppError from "../utils/error.utils.js";
 
-// GET all transactions
-export const getTransactions = async (req, res,next) => {
+// ✅ Get all transactions
+export const getTransactions = async (req, res, next) => {
   try {
-    const transactions = await Transaction.find();
+    const transactions = await Transaction.find({ user: req.user.id });
     res.status(200).json({
-      success:true,
+      success: true,
       transactions,
     });
   } catch (error) {
-   return next (new AppError(error.message,500))
+    return next(new AppError(error.message, 500));
   }
 };
 
-// POST create transaction
-export const createTransaction = async (req, res,next) => {
+// ✅ Create new transaction
+export const createTransaction = async (req, res, next) => {
   try {
-    const newTransaction = new Transaction(req.body);
+    const newTransaction = new Transaction({
+      ...req.body,
+      user: req.user.id,
+    });
     await newTransaction.save();
+
+    // 🔔 Emit notification
+    req.io.emit("notification", {
+      message: `New transaction created: ${newTransaction.type} - ₹${newTransaction.amount}`,
+      time: new Date(),
+    });
+
     res.status(201).json({
-        success:true,
-        message:"transaction created successfully",
-        newTransaction,
+      success: true,
+      message: "Transaction created successfully",
+      newTransaction,
     });
   } catch (error) {
-     return next (new AppError(error.message,500))
+    return next(new AppError(error.message, 500));
   }
 };
 
-export  const getTransactionById = async (req,res,next) => {
+// ✅ Get transaction by ID
+export const getTransactionById = async (req, res, next) => {
   try {
-  const transactionGet = await Transaction.findById(req.params.id)
-  if(!transaction){
-    return next (new AppError("transaction not found",400))
-  }
-  res.status(200).json({
-    success:true,
-    transactionGet
-    
-  })
-  } catch (error) {
-    return next (new AppError(error.message,500))
-  }
-}
+    const transaction = await Transaction.findOne({
+      _id: req.params.id,
+      user: req.user.id,
+    });
 
-// PUT update transaction
-export const updateTransaction = async (req, res,next) => {
+    if (!transaction) {
+      return next(new AppError("Transaction not found", 404));
+    }
+
+    res.status(200).json({
+      success: true,
+      transaction,
+    });
+  } catch (error) {
+    return next(new AppError(error.message, 500));
+  }
+};
+
+// ✅ Update transaction
+export const updateTransaction = async (req, res, next) => {
   try {
-    const updated = await Transaction.findByIdAndUpdate(
-      req.params.id,
+    const updated = await Transaction.findOneAndUpdate(
+      { _id: req.params.id, user: req.user.id },
       req.body,
       { new: true }
     );
-    res.json(updated);
-  } catch (err) {
-   return next (new AppError(error.message,500))
+
+    if (!updated) {
+      return next(new AppError("Transaction not found or not authorized", 404));
+    }
+
+    // 🔔 Emit notification
+    req.io.emit("notification", {
+      message: `Transaction updated: ${updated.type} - ₹${updated.amount}`,
+      time: new Date(),
+    });
+
+    res.json({
+      success: true,
+      message: "Transaction updated successfully",
+      updated,
+    });
+  } catch (error) {
+    return next(new AppError(error.message, 500));
   }
 };
 
-// DELETE transaction
-export const deleteTransaction = async (req, res,next) => {
+// ✅ Delete transaction
+export const deleteTransaction = async (req, res, next) => {
   try {
-    await Transaction.findByIdAndDelete(req.params.id);
-    res.json({ message: "Transaction deleted" });
-  } catch (err) {
-    return next (new AppError(error.message,500))
+    const deleted = await Transaction.findOneAndDelete({
+      _id: req.params.id,
+      user: req.user.id,
+    });
+
+    if (!deleted) {
+      return next(new AppError("Transaction not found or not authorized", 404));
+    }
+
+    // 🔔 Emit notification
+    req.io.emit("notification", {
+      message: `Transaction deleted: ${deleted.type} - ₹${deleted.amount}`,
+      time: new Date(),
+    });
+
+    res.json({
+      success: true,
+      message: "Transaction deleted successfully",
+    });
+  } catch (error) {
+    return next(new AppError(error.message, 500));
   }
 };
 
-// GET summary
-
-
-// GET summary
-export const getSummary = async (req, res) => {
+// ✅ Get summary
+export const getSummary = async (req, res, next) => {
   try {
-    const accounts = await Account.find();
+    const accounts = await Account.find({ user: req.user.id });
     const totalBalance = accounts.reduce((acc, a) => acc + a.balance, 0);
 
-    const transactions = await Transaction.find();
+    const transactions = await Transaction.find({ user: req.user.id });
+
     const expenses = transactions
-      .filter(t => t.type === "expense")
+      .filter((t) => t.type === "expense")
       .reduce((acc, t) => acc + t.amount, 0);
+
     const revenues = transactions
-      .filter(t => t.type === "revenue")
+      .filter((t) => t.type === "income")
       .reduce((acc, t) => acc + t.amount, 0);
 
     res.json({
+      success: true,
       totalBalance,
       revenues,
       expenses,
     });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  } catch (error) {
+    return next(new AppError(error.message, 500));
   }
 };

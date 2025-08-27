@@ -253,5 +253,37 @@ const resetPassword = async (req, res, next) => {
   });
 };
 
+const changePassword = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { currentPassword, newPassword } = req.body;
 
-export { register, login, logout, getProfile, forgotPassword , updateProfile, resetPassword };
+    if (!currentPassword || !newPassword) {
+      return next(new AppError("All fields are required", 400));
+    }
+
+    const user = await User.findById(userId).select("+password");
+
+    if (!user) {
+      return next(new AppError("User not found", 404));
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return next(new AppError("Current password is incorrect", 400));
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Password updated successfully",
+    });
+  } catch (error) {
+    return next(new AppError(error.message, 500));
+  }
+};
+
+
+export { register, login, logout, getProfile, forgotPassword , updateProfile, resetPassword, changePassword };

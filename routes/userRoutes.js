@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  changePassword,
   forgotPassword,
   getProfile,
   login,
@@ -22,6 +23,9 @@ router.get("/me", isLoggedIn, getProfile);
 
 
 router.put("/update", isLoggedIn, upload.single("avatar"), updateProfile);
+
+router.put("/change-password", isLoggedIn, changePassword);
+
 
 
 router.post("/reset", forgotPassword);

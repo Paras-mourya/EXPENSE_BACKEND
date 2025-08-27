@@ -6,13 +6,15 @@ import {
   getAccounts,
   updateAccount,
 } from "../controllers/accountController.js";
+import { isLoggedIn } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
-router.get("/", getAccounts);
-router.post("/", addAccount);
-router.get("/:id", getAccountById);
-router.put("/:id", updateAccount);
-router.delete("/:id", deleteAccount);
+
+router.get("/", isLoggedIn, getAccounts);
+router.post("/", isLoggedIn, addAccount);
+router.get("/:id", isLoggedIn, getAccountById);
+router.put("/:id", isLoggedIn, updateAccount);
+router.delete("/:id", isLoggedIn, deleteAccount);
 
 export default router;
