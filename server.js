@@ -51,7 +51,7 @@ io.on("connection", (socket) => {
   // Test notification after 3 sec
   setTimeout(() => {
     socket.emit("notification", {
-      message: "Welcome! 🎉 You are connected to real-time notifications.",
+      message: "Welcome! to FINEBANK.IO",
       time: new Date().toISOString(),
     });
   }, 3000);

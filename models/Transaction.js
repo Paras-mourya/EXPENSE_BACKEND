@@ -17,6 +17,11 @@ const transactionSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    account: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Account",
+      required: true, // har transaction ke liye account mandatory
+    },
     status: {
       type: String,
       enum: ["Pending", "Complete"],

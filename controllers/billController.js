@@ -1,5 +1,9 @@
 import Bill from "../models/Bill.js";
 import AppError from "../utils/error.utils.js";
+import path from "path";
+import fs from "fs";
+import cloudinary from "cloudinary";
+
 
 // ✅ Get all bills of logged-in user
 const getBills = async (req, res, next) => {
@@ -38,19 +42,42 @@ const getBillById = async (req, res, next) => {
 // ✅ Create new bill
 const createBill = async (req, res, next) => {
   try {
-    const { vendor, plan, dueDate, amount, logoUrl, lastChargeDate } = req.body;
+    const { vendor, plan, description, dueDate, amount, lastChargeDate } = req.body;
+
+    let logoData = null;
+
+    if (req.file) {
+      const filePath = path.resolve(req.file.path).replace(/\\/g, "/");
+      console.log(" Uploading bill logo to Cloudinary:", filePath);
+
+      const result = await cloudinary.v2.uploader.upload(filePath, {
+        folder: "bills",
+        resource_type: "auto",
+        timeout: 120000,
+      });
+
+      console.log(" Cloudinary upload success:", result.secure_url);
+
+      logoData = {
+        public_id: result.public_id,
+        secure_url: result.secure_url,
+      };
+
+      // temp local file delete
+      await fs.promises.rm(req.file.path);
+    }
 
     const bill = await Bill.create({
       vendor,
       plan,
+      description,
       dueDate,
       amount,
-      logoUrl,
       lastChargeDate,
-      user: req.user._id, // 🔑 Link bill to logged-in user
+      logo: logoData, // 👈 Save cloudinary logo object
+      user: req.user._id,
     });
 
-    // 🔔 Emit notification
     req.io.emit("notification", {
       message: `New bill created: ${vendor} - ${plan}`,
       time: new Date(),
@@ -69,17 +96,45 @@ const createBill = async (req, res, next) => {
 // ✅ Update bill
 const updateBill = async (req, res, next) => {
   try {
+    // 🔹 Pehle purana bill lao
+    const oldBill = await Bill.findOne({ _id: req.params.id, user: req.user._id });
+    if (!oldBill) return next(new AppError("Bill not found", 404));
+
+    let updateData = { ...req.body };
+
+    if (req.file) {
+      // ✅ Purana logo delete karo
+      if (oldBill.logo?.public_id) {
+        await cloudinary.v2.uploader.destroy(oldBill.logo.public_id);
+      }
+
+      // ✅ Naya upload karo
+      const filePath = path.resolve(req.file.path).replace(/\\/g, "/");
+      console.log("Uploading new bill logo to Cloudinary:", filePath);
+
+      const result = await cloudinary.v2.uploader.upload(filePath, {
+        folder: "bills",
+        resource_type: "auto",
+        timeout: 120000,
+      });
+
+      console.log("Cloudinary upload success:", result.secure_url);
+
+      updateData.logo = {
+        public_id: result.public_id,
+        secure_url: result.secure_url,
+      };
+
+      await fs.promises.rm(req.file.path);
+    }
+
+    // ✅ Ab update karo
     const bill = await Bill.findOneAndUpdate(
       { _id: req.params.id, user: req.user._id },
-      req.body,
+      updateData,
       { new: true }
     );
 
-    if (!bill) {
-      return next(new AppError("Bill not found", 404));
-    }
-
-    // 🔔 Emit notification
     req.io.emit("notification", {
       message: `Bill updated: ${bill.vendor} - ${bill.plan}`,
       time: new Date(),
@@ -94,6 +149,7 @@ const updateBill = async (req, res, next) => {
     return next(new AppError(error.message, 500));
   }
 };
+
 
 // ✅ Delete bill
 const deleteBill = async (req, res, next) => {
@@ -112,6 +168,10 @@ const deleteBill = async (req, res, next) => {
       message: `Bill deleted: ${bill.vendor} - ${bill.plan}`,
       time: new Date(),
     });
+    if (bill.logo?.public_id) {
+  await cloudinary.v2.uploader.destroy(bill.logo.public_id);
+}
+
 
     res.status(200).json({
       success: true,

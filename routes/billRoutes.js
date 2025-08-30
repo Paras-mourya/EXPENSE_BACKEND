@@ -7,13 +7,17 @@ import {
   deleteBill,
 } from "../controllers/billController.js";
 import { isLoggedIn } from "../middleware/auth.middleware.js";
+import { upload } from "../middleware/multer.middleware.js";
 
 const router = Router();
 
 router.get("/", isLoggedIn, getBills);
-router.post("/", isLoggedIn, createBill);
 router.get("/:id", isLoggedIn, getBillById);
-router.put("/:id", isLoggedIn, updateBill);
+
+// ✅ File upload ke saath create/update
+router.post("/", isLoggedIn, upload.single("logo"), createBill);
+router.put("/:id", isLoggedIn, upload.single("logo"), updateBill);
+
 router.delete("/:id", isLoggedIn, deleteBill);
 
 export default router;

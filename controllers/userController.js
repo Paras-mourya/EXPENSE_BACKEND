@@ -165,13 +165,13 @@ const forgotPassword = async (req, res, next) => {
 const updateProfile = async (req, res, next) => {
   try {
     const userId = req.user.id; 
-    const { name } = req.body;
+    const { name,phone } = req.body;
 
     let updateData = {};
 
     if (name) updateData.name = name;
+    if (phone) updateData.phone = phone;
 
-   
     if (req.file) {
       const filePath = path.resolve(req.file.path).replace(/\\/g, "/");
       console.log(" Uploading new avatar to Cloudinary:", filePath);
@@ -202,6 +202,11 @@ const updateProfile = async (req, res, next) => {
     });
 
     updatedUser.password = undefined;
+
+    req.io.emit("notification", {
+      message: `Profile updated successfully: ${updatedUser.name}`,
+      time: new Date(),
+    });
 
     res.status(200).json({
       success: true,
@@ -270,15 +275,22 @@ const changePassword = async (req, res, next) => {
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
-      return next(new AppError("Current password is incorrect", 400));
+      return next(new AppError("Password is incorrect", 400));
     }
 
     user.password = newPassword;
     await user.save();
 
+
+
+    req.io.emit("notification", {
+      message: `Password changed successfully`,
+      time: new Date(),
+    });
+
     res.status(200).json({
       success: true,
-      message: "Password updated successfully",
+      message: "Password changed successfully",
     });
   } catch (error) {
     return next(new AppError(error.message, 500));

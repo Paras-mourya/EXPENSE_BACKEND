@@ -5,11 +5,15 @@ const billSchema = new Schema(
     vendor: { type: String, required: true }, 
     plan: { type: String },
     dueDate: { type: Date, required: true }, 
+    description: { type: String, required: true },
     amount: { type: Number, required: true, min: 0 }, 
-    logoUrl: { type: String }, 
-    lastChargeDate: { type: Date },
-
     
+    logo: {  
+      public_id: { type: String },
+      secure_url: { type: String }
+    },
+
+    lastChargeDate: { type: Date },
     user: {
       type: Schema.Types.ObjectId,
       ref: "User",

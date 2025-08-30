@@ -106,46 +106,96 @@ export const deleteExpense = async (req, res, next) => {
 };
 
 // ✅ Expense Comparison (Month-wise this year vs last year)
+// ✅ Expense Comparison (Daily / Weekly / Monthly / Yearly)
 export const getExpensesComparison = async (req, res, next) => {
   try {
-    const thisYear = new Date().getFullYear();
-    const expenses = await Expense.aggregate([
-      { $match: { user: req.user._id } },
-      {
-        $project: {
-          year: { $year: "$date" },
-          month: { $month: "$date" },
-          amount: 1,
-        },
-      },
-      {
-        $group: {
-          _id: { month: "$month", year: "$year" },
-          total: { $sum: "$amount" },
-        },
-      },
-    ]);
+    const filter = req.query.filter || "monthly"; // daily, weekly, monthly, yearly
+    const expenses = await Expense.find({ user: req.user._id });
 
-    const result = Array.from({ length: 12 }, (_, i) => {
-      const thisMonth = expenses.find(
-        (e) => e._id.month === i + 1 && e._id.year === thisYear
-      );
-      const lastMonth = expenses.find(
-        (e) => e._id.month === i + 1 && e._id.year === thisYear - 1
-      );
+    let result = [];
 
-      return {
-        month: new Date(0, i).toLocaleString("en", { month: "short" }),
-        thisMonth: thisMonth ? thisMonth.total : 0,
-        lastMonth: lastMonth ? lastMonth.total : 0,
-      };
-    });
+    if (filter === "daily") {
+      // last 30 days
+      const today = new Date();
+      const past = new Date();
+      past.setDate(today.getDate() - 29);
+
+      const dailyMap = {};
+      expenses.forEach((e) => {
+        if (e.date >= past && e.date <= today) {
+          const key = e.date.toISOString().split("T")[0]; // yyyy-mm-dd
+          dailyMap[key] = (dailyMap[key] || 0) + e.amount;
+        }
+      });
+
+      result = Array.from({ length: 30 }, (_, i) => {
+        const date = new Date(past);
+        date.setDate(past.getDate() + i);
+        const key = date.toISOString().split("T")[0];
+        return { label: key, total: dailyMap[key] || 0 };
+      });
+
+    } else if (filter === "weekly") {
+      // last 12 weeks
+      const weekMap = {};
+      expenses.forEach((e) => {
+        const week = getWeekNumber(e.date);
+        weekMap[week] = (weekMap[week] || 0) + e.amount;
+      });
+
+      result = Object.keys(weekMap)
+        .sort((a, b) => a - b)
+        .map((w) => ({ label: `Week ${w}`, total: weekMap[w] }));
+
+    } else if (filter === "monthly") {
+      // current year
+      const thisYear = new Date().getFullYear();
+      const monthlyMap = {};
+      expenses.forEach((e) => {
+        if (e.date.getFullYear() === thisYear) {
+          const month = e.date.getMonth(); // 0-11
+          monthlyMap[month] = (monthlyMap[month] || 0) + e.amount;
+        }
+      });
+
+      result = Array.from({ length: 12 }, (_, i) => ({
+        label: new Date(0, i).toLocaleString("en", { month: "short" }),
+        total: monthlyMap[i] || 0,
+      }));
+
+    } else if (filter === "yearly") {
+      // last 5 years
+      const currentYear = new Date().getFullYear();
+      const yearlyMap = {};
+      expenses.forEach((e) => {
+        const year = e.date.getFullYear();
+        if (year >= currentYear - 4) {
+          yearlyMap[year] = (yearlyMap[year] || 0) + e.amount;
+        }
+      });
+
+      result = Array.from({ length: 5 }, (_, i) => {
+        const y = currentYear - 4 + i;
+        return { label: y.toString(), total: yearlyMap[y] || 0 };
+      });
+    }
 
     res.status(200).json({ success: true, data: result });
   } catch (error) {
     return next(new AppError(error.message, 500));
   }
 };
+
+// helper function to get ISO week number
+function getWeekNumber(d) {
+  const date = new Date(d);
+  const start = new Date(date.getFullYear(), 0, 1);
+  const diff =
+    (date - start + (start.getTimezoneOffset() - date.getTimezoneOffset()) * 60000) /
+    (1000 * 60 * 60 * 24);
+  return Math.ceil((diff + start.getDay() + 1) / 7);
+}
+
 
 // ✅ Expense Breakdown by Category
 export const getExpensesBreakdown = async (req, res, next) => {

@@ -1,4 +1,5 @@
 import Account from "../models/Account.js";
+import Transaction from "../models/Transaction.js";
 import AppError from "../utils/error.utils.js";
 
 // GET all accounts for logged-in user
@@ -18,15 +19,14 @@ const getAccounts = async (req, res, next) => {
 const getAccountById = async (req, res, next) => {
   try {
     const account = await Account.findOne({ _id: req.params.id, user: req.user._id });
+    if (!account) return next(new AppError("Account not found", 404));
 
-    if (!account) {
-      return next(new AppError("Account not found", 404));
-    }
+    // ✅ Fetch transactions linked to this account
+    const transactions = await Transaction.find({ account: account._id, user: req.user._id }).sort({ date: -1 });
 
     res.status(200).json({
       success: true,
-      message: "Account found",
-      account,
+      account: { ...account.toObject(), transactions }, // frontend me ab populate ho jayega
     });
   } catch (error) {
     return next(new AppError(error.message, 500));
