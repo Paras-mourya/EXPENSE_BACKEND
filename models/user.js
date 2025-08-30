@@ -49,7 +49,7 @@ userSchema.pre("save", async function (next) {
   }
   this.password = await bcrypt.hash(this.password, 10);
 });
-userSchema.methods.generateJWTToken = function () {
+userSchema.methods.generateJWTToken = async function () {
   return jwt.sign(
     {
       id: this._id,

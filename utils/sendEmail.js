@@ -1,24 +1,29 @@
-import nodemailer from "nodemailer"
+import nodemailer from "nodemailer";
 
-const sendEmail = async function(email,subject,message){
-    
+const sendEmail = async (email, subject, message) => {
+  try {
+    let transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,     // smtp.gmail.com
+      port: process.env.SMTP_PORT,     // 587
+      secure: false,                   // Gmail ke liye false rakho
+      auth: {
+        user: process.env.SMTP_USERNAME,  // tumhara gmail
+        pass: process.env.SMTP_PASSWORD,  // Google App Password (16 digit)
+      },
+    });
 
-    let transporter=nodemailer.createTransport({
-        host:process.env.SMTP_HOST,
-        port:process.env.SMTP_PORT,
-        secure:false,
-        auth:{
-            user:process.env.SMTP_USERNAME,
-            pass:process.env.SMTP_PASSWORD,
-        }
-    })
+    let info = await transporter.sendMail({
+      from: process.env.SMTP_FROM_EMAIL, // gmail jisse bhejna hai
+      to: email,                         // jis bande ko bhejna hai
+      subject: subject,
+      html: message,
+    });
 
-    await transporter.sendMail({
-        from:process.env.SMTP_FROM_EMAIL, 
-        to:email, 
-        subject:subject,
-        html:message
-    })
-    
-}
-export {sendEmail}
+    console.log("✅ Email sent: %s", info.messageId);
+  } catch (error) {
+    console.error("❌ Email send error:", error);
+    throw new Error("Email not sent");
+  }
+};
+
+export { sendEmail };
