@@ -14,7 +14,6 @@ const router = Router();
 router.get("/", isLoggedIn, getBills);
 router.get("/:id", isLoggedIn, getBillById);
 
-// ✅ File upload ke saath create/update
 router.post("/", isLoggedIn, upload.single("logo"), createBill);
 router.put("/:id", isLoggedIn, upload.single("logo"), updateBill);
 
