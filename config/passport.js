@@ -16,29 +16,30 @@ passport.use(
           ? process.env.GOOGLE_CALLBACK_URL
           : process.env.GOOGLE_CALLBACK_URL_LOCAL,
     },
-    async (accessToken, refreshToken, profile, done) => {
-      try {
-       
-        let user = await User.findOne({ email: profile.emails[0].value });
+   async (accessToken, refreshToken, profile, done) => {
+  try {
+    let user = await User.findOne({ email: profile.emails[0].value });
 
-        if (!user) {
-       
-          user = await User.create({
-            name: profile.displayName,
-            email: profile.emails[0].value,
-            password: "google-oauth", 
-            isGoogleUser: true,       
-            avatar: {
-              secure_url: profile.photos[0]?.value,
-            },
-          });
-        }
-
-        return done(null, user);
-      } catch (err) {
-        return done(err, null);
-      }
+    if (!user) {
+      user = await User.create({
+        name: profile.displayName,
+        email: profile.emails[0].value,
+        password: "google-oauth",
+        isGoogleUser: true,
+        avatar: {
+          secure_url: profile.photos[0]?.value,
+        },
+      });
     }
+
+    const token = user.generateJWTToken();
+
+    return done(null, { user, token });
+  } catch (err) {
+    return done(err, null);
+  }
+}
+
   )
 );
 

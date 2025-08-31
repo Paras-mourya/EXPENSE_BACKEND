@@ -1,7 +1,7 @@
 import Expense from "../models/Expense.js";
 import AppError from "../utils/error.utils.js";
 
-// ✅ Create Expense
+
 export const createExpense = async (req, res, next) => {
   try {
     const { title, amount, category, date, account } = req.body;
@@ -19,7 +19,7 @@ export const createExpense = async (req, res, next) => {
       user: req.user._id,
     });
 
-    // 🔔 Emit notification
+    
     req.io.emit("notification", {
       message: `New expense added: ${title} - ₹${amount}`,
       time: new Date(),
@@ -35,7 +35,6 @@ export const createExpense = async (req, res, next) => {
   }
 };
 
-// ✅ Get All Expenses
 export const getExpenses = async (req, res, next) => {
   try {
     const expenses = await Expense.find({ user: req.user._id }).sort({ date: -1 });
@@ -45,7 +44,6 @@ export const getExpenses = async (req, res, next) => {
   }
 };
 
-// ✅ Get Expense by ID
 export const getExpenseById = async (req, res, next) => {
   try {
     const expense = await Expense.findOne({ _id: req.params.id, user: req.user._id });
@@ -57,7 +55,7 @@ export const getExpenseById = async (req, res, next) => {
   }
 };
 
-// ✅ Update Expense
+
 export const updateExpense = async (req, res, next) => {
   try {
     const expense = await Expense.findOneAndUpdate(
@@ -67,7 +65,7 @@ export const updateExpense = async (req, res, next) => {
     );
     if (!expense) return next(new AppError("Expense not found", 404));
 
-    // 🔔 Emit notification
+
     req.io.emit("notification", {
       message: `Expense updated: ${expense.title} - ₹${expense.amount}`,
       time: new Date(),
@@ -83,13 +81,13 @@ export const updateExpense = async (req, res, next) => {
   }
 };
 
-// ✅ Delete Expense
+
 export const deleteExpense = async (req, res, next) => {
   try {
     const expense = await Expense.findOneAndDelete({ _id: req.params.id, user: req.user._id });
     if (!expense) return next(new AppError("Expense not found", 404));
 
-    // 🔔 Emit notification
+   
     req.io.emit("notification", {
       message: `Expense deleted: ${expense.title} - ₹${expense.amount}`,
       time: new Date(),
@@ -105,8 +103,7 @@ export const deleteExpense = async (req, res, next) => {
   }
 };
 
-// ✅ Expense Comparison (Month-wise this year vs last year)
-// ✅ Expense Comparison (Daily / Weekly / Monthly / Yearly)
+
 export const getExpensesComparison = async (req, res, next) => {
   try {
     const filter = req.query.filter || "monthly"; // daily, weekly, monthly, yearly
@@ -123,7 +120,7 @@ export const getExpensesComparison = async (req, res, next) => {
       const dailyMap = {};
       expenses.forEach((e) => {
         if (e.date >= past && e.date <= today) {
-          const key = e.date.toISOString().split("T")[0]; // yyyy-mm-dd
+          const key = e.date.toISOString().split("T")[0]; 
           dailyMap[key] = (dailyMap[key] || 0) + e.amount;
         }
       });
@@ -136,7 +133,7 @@ export const getExpensesComparison = async (req, res, next) => {
       });
 
     } else if (filter === "weekly") {
-      // last 12 weeks
+      
       const weekMap = {};
       expenses.forEach((e) => {
         const week = getWeekNumber(e.date);
@@ -153,7 +150,7 @@ export const getExpensesComparison = async (req, res, next) => {
       const monthlyMap = {};
       expenses.forEach((e) => {
         if (e.date.getFullYear() === thisYear) {
-          const month = e.date.getMonth(); // 0-11
+          const month = e.date.getMonth(); 
           monthlyMap[month] = (monthlyMap[month] || 0) + e.amount;
         }
       });
@@ -186,7 +183,7 @@ export const getExpensesComparison = async (req, res, next) => {
   }
 };
 
-// helper function to get ISO week number
+
 function getWeekNumber(d) {
   const date = new Date(d);
   const start = new Date(date.getFullYear(), 0, 1);
@@ -197,7 +194,7 @@ function getWeekNumber(d) {
 }
 
 
-// ✅ Expense Breakdown by Category
+
 export const getExpensesBreakdown = async (req, res, next) => {
   try {
     const current = await Expense.aggregate([
@@ -220,7 +217,7 @@ export const getExpensesBreakdown = async (req, res, next) => {
         return {
           category: cat,
           total: catTotal,
-          changePercent: 0, // Future: add month-on-month % change
+          changePercent: 0, 
           items,
         };
       })

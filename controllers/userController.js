@@ -8,70 +8,66 @@ import crypto from "crypto";
 import { sendEmail } from "../utils/sendEmail.js";
 
 const cookieOption = {
-  maxAge: 7 * 24 * 60 * 60 * 1000, 
+  maxAge: 7 * 24 * 60 * 60 * 1000,
   httpOnly: true,
   sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   secure: process.env.NODE_ENV === "production" ? true : false,
 };
 
+const register = async (req, res, next) => {
+  const { name, email, password } = req.body;
 
-const register = async (req,res,next) => {
-    const {name,email,password}=req.body
+  if (!name || !email || !password) {
+    return next(new AppError("All fields are required", 400));
+  }
+  const userExists = await User.findOne({ email });
+  if (userExists) {
+    return next(new AppError("User already exists", 400));
+  }
 
+  const user = await User.create({
+    name,
+    email,
+    password,
+  });
+  console.log("new user created :", user._id);
 
-    if(!name || !email || !password){
-        return next(new AppError("All fields are required", 400))
-    }
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-        return next(new AppError("User already exists", 400));
-    }
+  user.password = undefined;
 
-    const user = await User.create({
-        name,
-        email,
-        password
-    })
-    console.log("new user created :",user._id);
+  const token = await user.generateJWTToken();
+  console.log("JWT token generated :", token);
 
-    user.password=undefined
-
-    const token = await user.generateJWTToken()
-    console.log("JWT token generated :",token);
-
-res.cookie("token", token, cookieOption);
+  res.cookie("token", token, cookieOption);
   res.status(200).json({
     success: true,
     message: "Account Created Successfully",
     user,
   });
-}
+};
 
 const login = async (req, res, next) => {
   const { email, password } = req.body;
 
   try {
     if (!email || !password) {
-    return next(new AppError("All fields are required", 400));
-  }
+      return next(new AppError("All fields are required", 400));
+    }
 
-  const user = await User.findOne({ email }).select("+password");
-if (!user || !(await bcrypt.compare(password, user.password))) {
+    const user = await User.findOne({ email }).select("+password");
+    if (!user || !(await bcrypt.compare(password, user.password))) {
       console.warn(" Invalid credentials");
       return next(new AppError("email or password does not match"));
     }
 
-  
-
-  const token = await user.generateJWTToken();
-  console.log("JWT token generated :", token);
-user.password=undefined
-  res.cookie("token", token, cookieOption);
-  res.status(200).json({
-    success: true,
-    message: " user Login Successful",
-    user,
-  });
+    const token = await user.generateJWTToken();
+    console.log("JWT token generated :", token);
+    user.password = undefined;
+    res.cookie("token", token, cookieOption);
+    res.status(200).json({
+      success: true,
+      message: " user Login Successful",
+      user,
+    });
   } catch (error) {
     console.log("Error occurred during login:", error);
     return next(new AppError(error.message, 500));
@@ -84,13 +80,13 @@ const logout = async (req, res, next) => {
   try {
     const cookieOption = {
       maxAge: 0,
-      httpOnly: true
+      httpOnly: true,
     };
-    res.cookie("token", null, cookieOption);  
+    res.cookie("token", null, cookieOption);
     console.log("user logged out");
     res.status(200).json({
       success: true,
-      message: "user logged out successfully"
+      message: "user logged out successfully",
     });
   } catch (error) {
     console.error(" Logout error:", error);
@@ -100,7 +96,7 @@ const logout = async (req, res, next) => {
 
 const getProfile = async (req, res, next) => {
   console.log("Incoming getProfile request");
-  const userId = req.user.id;   
+  const userId = req.user.id;
   console.log("User ID from token:", userId);
 
   try {
@@ -118,20 +114,13 @@ const getProfile = async (req, res, next) => {
   }
 };
 
-
 const forgotPassword = async (req, res, next) => {
-  console.log(" Incoming forgotPassword request");
-  console.log(" Body received:", req.body);
-  console.log(" FRONTEND_URL:", process.env.FRONTEND_URL);
-
   const { email } = req.body;
   if (!email) {
-    console.warn("Email missing");
     return next(new AppError("email is required", 400));
   }
 
   const user = await User.findOne({ email });
-  console.log(" User found for reset:", !!user);
 
   if (!user) {
     return next(new AppError("email not registered", 400));
@@ -141,28 +130,22 @@ const forgotPassword = async (req, res, next) => {
   await user.save();
   console.log(" Password reset token generated:", resetToken);
 
-  
   const resetPasswordURL = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
   console.log(" Complete Reset URL:", resetPasswordURL);
-  
- 
-  const urlParts = resetPasswordURL.split('/');
-  console.log(" URL Parts:", urlParts);
+
+  const urlParts = resetPasswordURL.split("/");
 
   const message = `Click the link to reset your password: ${resetPasswordURL}`;
   const subject = "Reset Your Password";
 
   try {
     await sendEmail(email, subject, message);
-    console.log(" Reset email sent to:", email);
-    console.log(" Email content:", { subject, resetPasswordURL });
 
     res.status(200).json({
       success: true,
       message: `Reset password token has been sent to ${email} successfully`,
     });
   } catch (error) {
-    console.error(" Forgot password error:", error);
     user.forgotPasswordExpiry = undefined;
     user.forgotPasswordToken = undefined;
     await user.save();
@@ -171,8 +154,8 @@ const forgotPassword = async (req, res, next) => {
 };
 const updateProfile = async (req, res, next) => {
   try {
-    const userId = req.user.id; 
-    const { name,phone } = req.body;
+    const userId = req.user.id;
+    const { name, phone } = req.body;
 
     let updateData = {};
 
@@ -190,7 +173,7 @@ const updateProfile = async (req, res, next) => {
         gravity: "faces",
         crop: "fill",
         resource_type: "auto",
-        timeout: 120000, 
+        timeout: 120000,
       });
 
       console.log(" Cloudinary upload success:", result.secure_url);
@@ -200,7 +183,6 @@ const updateProfile = async (req, res, next) => {
         secure_url: result.secure_url,
       };
 
-      
       await fs.promises.rm(req.file.path);
     }
 
@@ -288,8 +270,6 @@ const changePassword = async (req, res, next) => {
     user.password = newPassword;
     await user.save();
 
-
-
     req.io.emit("notification", {
       message: `Password changed successfully`,
       time: new Date(),
@@ -304,5 +284,13 @@ const changePassword = async (req, res, next) => {
   }
 };
 
-
-export { register, login, logout, getProfile, forgotPassword , updateProfile, resetPassword, changePassword };
+export {
+  register,
+  login,
+  logout,
+  getProfile,
+  forgotPassword,
+  updateProfile,
+  resetPassword,
+  changePassword,
+};

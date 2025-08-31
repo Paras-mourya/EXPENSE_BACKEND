@@ -5,14 +5,14 @@ import User from "../models/user.js";
 const isLoggedIn = async (req, res, next) => {
   try {
     const token = req.cookies?.token;
-    console.log("DEBUG >> Incoming token:", token);
+    console.log(" Incoming token:", token);
 
     if (!token) {
       return next(new AppError("Please login to continue", 401));
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log("DEBUG >> Decoded token:", decoded);
+    console.log(" Decoded token:", decoded);
 
    
     const user = await User.findById(decoded.id).select("-password");
@@ -23,7 +23,7 @@ const isLoggedIn = async (req, res, next) => {
     req.user = user; 
     next();
   } catch (error) {
-    return next(new AppError("Invalid or expired token", 401));
+    return next(new AppError("Invalid token", 401));
   }
 };
 
