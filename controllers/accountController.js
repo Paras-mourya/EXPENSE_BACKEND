@@ -2,7 +2,7 @@ import Account from "../models/Account.js";
 import Transaction from "../models/Transaction.js";
 import AppError from "../utils/error.utils.js";
 
-// GET all accounts for logged-in user
+
 const getAccounts = async (req, res, next) => {
   try {
     const accounts = await Account.find({ user: req.user._id });
@@ -15,25 +15,22 @@ const getAccounts = async (req, res, next) => {
   }
 };
 
-// GET single account
 const getAccountById = async (req, res, next) => {
   try {
     const account = await Account.findOne({ _id: req.params.id, user: req.user._id });
     if (!account) return next(new AppError("Account not found", 404));
 
-    // ✅ Fetch transactions linked to this account
     const transactions = await Transaction.find({ account: account._id, user: req.user._id }).sort({ date: -1 });
 
     res.status(200).json({
       success: true,
-      account: { ...account.toObject(), transactions }, // frontend me ab populate ho jayega
+      account: { ...account.toObject(), transactions },
     });
   } catch (error) {
     return next(new AppError(error.message, 500));
   }
 };
 
-// CREATE new account
 const addAccount = async (req, res, next) => {
   try {
     const { accountType, branchName, accountNumber, bankName, balance } = req.body;
@@ -42,7 +39,7 @@ const addAccount = async (req, res, next) => {
       return next(new AppError("All fields are required", 400));
     }
 
-    // Prevent duplicate account number per user
+
     const existing = await Account.findOne({ accountNumber, user: req.user._id });
     if (existing) {
       return next(new AppError("Account with this number already exists", 400));
@@ -57,7 +54,7 @@ const addAccount = async (req, res, next) => {
       user: req.user._id,
     });
 
-    // ✅ Emit notification
+
     req.io.emit("notification", {
       message: `New account created: ${bankName} (${accountType})`,
       time: new Date(),
@@ -73,7 +70,7 @@ const addAccount = async (req, res, next) => {
   }
 };
 
-// UPDATE account
+
 const updateAccount = async (req, res, next) => {
   try {
     const account = await Account.findOneAndUpdate(
@@ -86,7 +83,6 @@ const updateAccount = async (req, res, next) => {
       return next(new AppError("Account not found", 404));
     }
 
-    // ✅ Emit notification
     req.io.emit("notification", {
       message: `Account updated: ${account.bankName} (${account.accountType})`,
       time: new Date(),
@@ -102,7 +98,7 @@ const updateAccount = async (req, res, next) => {
   }
 };
 
-// DELETE account
+
 const deleteAccount = async (req, res, next) => {
   try {
     const account = await Account.findOneAndDelete({ _id: req.params.id, user: req.user._id });
@@ -111,7 +107,7 @@ const deleteAccount = async (req, res, next) => {
       return next(new AppError("Account not found", 404));
     }
 
-    // ✅ Emit notification
+   
     req.io.emit("notification", {
       message: `Account deleted: ${account.bankName} (${account.accountType})`,
       time: new Date(),

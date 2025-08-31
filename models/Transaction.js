@@ -20,7 +20,7 @@ const transactionSchema = new mongoose.Schema(
     account: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Account",
-      required: true, // har transaction ke liye account mandatory
+      required: true, 
     },
     status: {
       type: String,

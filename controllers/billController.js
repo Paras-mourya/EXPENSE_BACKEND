@@ -5,7 +5,7 @@ import fs from "fs";
 import cloudinary from "cloudinary";
 
 
-// ✅ Get all bills of logged-in user
+
 const getBills = async (req, res, next) => {
   try {
     const bills = await Bill.find({ user: req.user._id }).sort({ dueDate: 1 });
@@ -20,7 +20,6 @@ const getBills = async (req, res, next) => {
   }
 };
 
-// ✅ Get single bill by ID
 const getBillById = async (req, res, next) => {
   try {
     const bill = await Bill.findOne({ _id: req.params.id, user: req.user._id });
@@ -39,7 +38,7 @@ const getBillById = async (req, res, next) => {
   }
 };
 
-// ✅ Create new bill
+
 const createBill = async (req, res, next) => {
   try {
     const { vendor, plan, description, dueDate, amount, lastChargeDate } = req.body;
@@ -63,7 +62,7 @@ const createBill = async (req, res, next) => {
         secure_url: result.secure_url,
       };
 
-      // temp local file delete
+      
       await fs.promises.rm(req.file.path);
     }
 
@@ -74,7 +73,7 @@ const createBill = async (req, res, next) => {
       dueDate,
       amount,
       lastChargeDate,
-      logo: logoData, // 👈 Save cloudinary logo object
+      logo: logoData, 
       user: req.user._id,
     });
 
@@ -93,22 +92,21 @@ const createBill = async (req, res, next) => {
   }
 };
 
-// ✅ Update bill
 const updateBill = async (req, res, next) => {
   try {
-    // 🔹 Pehle purana bill lao
+   
     const oldBill = await Bill.findOne({ _id: req.params.id, user: req.user._id });
     if (!oldBill) return next(new AppError("Bill not found", 404));
 
     let updateData = { ...req.body };
 
     if (req.file) {
-      // ✅ Purana logo delete karo
+ 
       if (oldBill.logo?.public_id) {
         await cloudinary.v2.uploader.destroy(oldBill.logo.public_id);
       }
 
-      // ✅ Naya upload karo
+  
       const filePath = path.resolve(req.file.path).replace(/\\/g, "/");
       console.log("Uploading new bill logo to Cloudinary:", filePath);
 
@@ -128,7 +126,7 @@ const updateBill = async (req, res, next) => {
       await fs.promises.rm(req.file.path);
     }
 
-    // ✅ Ab update karo
+
     const bill = await Bill.findOneAndUpdate(
       { _id: req.params.id, user: req.user._id },
       updateData,
@@ -151,7 +149,6 @@ const updateBill = async (req, res, next) => {
 };
 
 
-// ✅ Delete bill
 const deleteBill = async (req, res, next) => {
   try {
     const bill = await Bill.findOneAndDelete({
@@ -163,7 +160,7 @@ const deleteBill = async (req, res, next) => {
       return next(new AppError("Bill not found", 404));
     }
 
-    // 🔔 Emit notification
+   
     req.io.emit("notification", {
       message: `Bill deleted: ${bill.vendor} - ${bill.plan}`,
       time: new Date(),

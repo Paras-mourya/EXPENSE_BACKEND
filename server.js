@@ -27,10 +27,10 @@ connectDB();
 
 const app = express();
 
-// ✅ Create HTTP server for Socket.io
+
 const server = http.createServer(app);
 
-// ✅ Setup Socket.io with explicit path & methods
+
 const io = new Server(server, {
   path: "/socket.io/",
   cors: {
@@ -45,9 +45,9 @@ const io = new Server(server, {
   },
 });
 
-// 🔹 Socket.io Events
+
 io.on("connection", (socket) => {
-  console.log("⚡ User connected:", socket.id);
+  console.log(" User connected:", socket.id);
 
   setTimeout(() => {
     socket.emit("notification", {
@@ -57,7 +57,7 @@ io.on("connection", (socket) => {
   }, 3000);
 
   socket.on("disconnect", () => {
-    console.log("❌ User disconnected:", socket.id);
+    console.log(" User disconnected:", socket.id);
   });
 });
 
@@ -71,7 +71,7 @@ const allowedOrigins = [
 const vercelRegex = /^https:\/\/.*\.vercel\.app$/;
 
 app.use((req, res, next) => {
-  console.log("📝 Incoming request:");
+  console.log(" Incoming request:");
   console.log("   Origin:", req.headers.origin);
   console.log("   Path:", req.path);
   next();
@@ -87,7 +87,7 @@ app.use(
       ) {
         return callback(null, true);
       }
-      console.log("🚫 Blocked by CORS:", origin);
+      console.log(" Blocked by CORS:", origin);
       return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
@@ -96,34 +96,34 @@ app.use(
 
 app.options("*", cors());
 
-// ✅ Basic middleware setup
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(morgan("dev"));
 
-// ✅ Session middleware (MUST be after cookieParser and before passport)
+
 app.use(session({
   secret: process.env.SESSION_SECRET || 'fallback-secret-key-12345',
   resave: false,
   saveUninitialized: false,
   cookie: { 
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    maxAge: 24 * 60 * 60 * 1000, 
     httpOnly: true
   }
 }));
 
-// ✅ Passport middleware (MUST be after session)
+
 app.use(passport.initialize());
 app.use(passport.session());
 
-// ✅ Attach io instance to every request
+
 app.use((req, res, next) => {
   req.io = io;
   next();
 });
 
-// ✅ Additional headers for compatibility
+
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
   res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
@@ -141,7 +141,7 @@ cloudinary.v2.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// ✅ Routes
+
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/accounts", accountRoutes);
@@ -149,7 +149,7 @@ app.use("/api/bills", billRoutes);
 app.use("/api/goals", goalRoutes);
 app.use("/api/expenses", expenseRoutes);
 
-// ✅ Test route for debugging
+
 app.get("/api/test", (req, res) => {
   res.json({
     message: "Server is working!",
@@ -162,10 +162,10 @@ app.use(errorMiddleware);
 
 const PORT = process.env.PORT || 4000;
 server.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
-  console.log("✅ FRONTEND_URL:", process.env.FRONTEND_URL);
-  console.log("✅ FRONTEND_URL_LOCAL:", process.env.FRONTEND_URL_LOCAL);
-  console.log("🔐 Google Client ID:", process.env.GOOGLE_CLIENT_ID ? "✅ Set" : "❌ Missing");
-  console.log("🔐 Google Client Secret:", process.env.GOOGLE_CLIENT_SECRET ? "✅ Set" : "❌ Missing");
-  console.log("🔐 JWT Secret:", process.env.JWT_SECRET ? "✅ Set" : "❌ Missing");
+  console.log(` Server running on port ${PORT}`);
+  console.log(" FRONTEND_URL:", process.env.FRONTEND_URL);
+  console.log(" FRONTEND_URL_LOCAL:", process.env.FRONTEND_URL_LOCAL);
+  console.log(" Google Client ID:", process.env.GOOGLE_CLIENT_ID ? "Set" : " Missing");
+  console.log(" Google Client Secret:", process.env.GOOGLE_CLIENT_SECRET ? "Set" : " Missing");
+  console.log(" JWT Secret:", process.env.JWT_SECRET ? "Set" : " Missing");
 });

@@ -2,7 +2,7 @@ import Transaction from "../models/Transaction.js";
 import Account from "../models/Account.js";
 import AppError from "../utils/error.utils.js";
 
-// ✅ Get all transactions
+
 export const getTransactions = async (req, res, next) => {
   try {
     const transactions = await Transaction.find({ user: req.user.id }).populate("account");
@@ -11,12 +11,12 @@ export const getTransactions = async (req, res, next) => {
       transactions,
     });
   } catch (error) {
-    console.error("❌ Get Transactions Error:", error);
+    console.error(" Get Transactions Error:", error);
     return next(new AppError(error.message, 500));
   }
 };
 
-// ✅ Create new transaction (with account balance update)
+
 export const createTransaction = async (req, res, next) => {
   try {
     const { account: accountId, type, amount } = req.body;
@@ -25,13 +25,13 @@ export const createTransaction = async (req, res, next) => {
       return next(new AppError("Account ID is required", 400));
     }
 
-    // 🏦 Check if account exists and belongs to user
+    
     const account = await Account.findOne({ _id: accountId, user: req.user.id });
     if (!account) {
       return next(new AppError("Account not found or not authorized", 404));
     }
 
-    // 💾 Save transaction
+    
     const newTransaction = new Transaction({
       ...req.body,
       user: req.user.id,
@@ -39,7 +39,7 @@ export const createTransaction = async (req, res, next) => {
     });
     await newTransaction.save();
 
-    // 💰 Update account balance
+    
     if (type === "expense") {
       account.balance -= amount;
     } else if (type === "income") {
@@ -47,7 +47,7 @@ export const createTransaction = async (req, res, next) => {
     }
     await account.save();
 
-    // 🔔 Emit notification
+    
     req.io.emit("notification", {
       message: `New transaction created: ${newTransaction.type} - ₹${newTransaction.amount}`,
       time: new Date(),
@@ -59,12 +59,12 @@ export const createTransaction = async (req, res, next) => {
       newTransaction,
     });
   } catch (error) {
-    console.error("❌ Transaction Create Error:", error);
+    console.error("Transaction Create Error:", error);
     return next(new AppError(error.message, 500));
   }
 };
 
-// ✅ Get transaction by ID
+
 export const getTransactionById = async (req, res, next) => {
   try {
     const transaction = await Transaction.findOne({
@@ -86,7 +86,6 @@ export const getTransactionById = async (req, res, next) => {
   }
 };
 
-// ✅ Update transaction (with balance adjustment)
 export const updateTransaction = async (req, res, next) => {
   try {
     const oldTransaction = await Transaction.findOne({
@@ -98,23 +97,23 @@ export const updateTransaction = async (req, res, next) => {
       return next(new AppError("Transaction not found or not authorized", 404));
     }
 
-    // 🏦 Get account
+    
     const account = await Account.findOne({ _id: oldTransaction.account, user: req.user.id });
     if (!account) {
       return next(new AppError("Account not found or not authorized", 404));
     }
 
-    // 🔄 Revert old transaction effect
+    
     if (oldTransaction.type === "expense") {
       account.balance += oldTransaction.amount;
     } else if (oldTransaction.type === "income") {
       account.balance -= oldTransaction.amount;
     }
 
-    // ✅ Update with new values
+    
     const updated = await Transaction.findByIdAndUpdate(req.params.id, req.body, { new: true });
 
-    // 💰 Apply new transaction effect
+    
     if (updated.type === "expense") {
       account.balance -= updated.amount;
     } else if (updated.type === "income") {
@@ -122,7 +121,7 @@ export const updateTransaction = async (req, res, next) => {
     }
     await account.save();
 
-    // 🔔 Emit notification
+   
     req.io.emit("notification", {
       message: `Transaction updated: ${updated.type} - ₹${updated.amount}`,
       time: new Date(),
@@ -134,13 +133,13 @@ export const updateTransaction = async (req, res, next) => {
       updated,
     });
   } catch (error) {
-    console.error("❌ Update Transaction Error:", error);
+    console.error(" Update Transaction Error:", error);
     return next(new AppError(error.message, 500));
   }
 };
 
 
-// ✅ Delete transaction (with balance rollback)
+
 export const deleteTransaction = async (req, res, next) => {
   try {
     const deleted = await Transaction.findOneAndDelete({
@@ -152,10 +151,10 @@ export const deleteTransaction = async (req, res, next) => {
       return next(new AppError("Transaction not found or not authorized", 404));
     }
 
-    // 🏦 Get account
+    
     const account = await Account.findOne({ _id: deleted.account, user: req.user.id });
     if (account) {
-      // 🔄 Revert transaction effect
+     
       if (deleted.type === "expense") {
         account.balance += deleted.amount;
       } else if (deleted.type === "income") {
@@ -164,7 +163,7 @@ export const deleteTransaction = async (req, res, next) => {
       await account.save();
     }
 
-    // 🔔 Emit notification
+    
     req.io.emit("notification", {
       message: `Transaction deleted: ${deleted.type} - ₹${deleted.amount}`,
       time: new Date(),
@@ -175,12 +174,12 @@ export const deleteTransaction = async (req, res, next) => {
       message: "Transaction deleted successfully",
     });
   } catch (error) {
-    console.error("❌ Delete Transaction Error:", error);
+    console.error(" Delete Transaction Error:", error);
     return next(new AppError(error.message, 500));
   }
 };
 
-// ✅ Get summary
+
 export const getSummary = async (req, res, next) => {
   try {
     const accounts = await Account.find({ user: req.user.id });
@@ -203,7 +202,7 @@ export const getSummary = async (req, res, next) => {
       expenses,
     });
   } catch (error) {
-    console.error("❌ Get Summary Error:", error);
+    console.error(" Get Summary Error:", error);
     return next(new AppError(error.message, 500));
   }
 };

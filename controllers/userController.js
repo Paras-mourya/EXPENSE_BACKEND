@@ -86,7 +86,7 @@ const logout = async (req, res, next) => {
       maxAge: 0,
       httpOnly: true
     };
-    res.cookie("token", null, cookieOption);  // token delete
+    res.cookie("token", null, cookieOption);  
     console.log("user logged out");
     res.status(200).json({
       success: true,
@@ -100,7 +100,7 @@ const logout = async (req, res, next) => {
 
 const getProfile = async (req, res, next) => {
   console.log("Incoming getProfile request");
-  const userId = req.user.id;   // token se user.id aa rha hai
+  const userId = req.user.id;   
   console.log("User ID from token:", userId);
 
   try {
@@ -120,18 +120,18 @@ const getProfile = async (req, res, next) => {
 
 
 const forgotPassword = async (req, res, next) => {
-  console.log("🔍 Incoming forgotPassword request");
-  console.log("📧 Body received:", req.body);
-  console.log("🌐 FRONTEND_URL:", process.env.FRONTEND_URL);
+  console.log(" Incoming forgotPassword request");
+  console.log(" Body received:", req.body);
+  console.log(" FRONTEND_URL:", process.env.FRONTEND_URL);
 
   const { email } = req.body;
   if (!email) {
-    console.warn("⚠️ Email missing");
+    console.warn("Email missing");
     return next(new AppError("email is required", 400));
   }
 
   const user = await User.findOne({ email });
-  console.log("👤 User found for reset:", !!user);
+  console.log(" User found for reset:", !!user);
 
   if (!user) {
     return next(new AppError("email not registered", 400));
@@ -139,30 +139,30 @@ const forgotPassword = async (req, res, next) => {
 
   const resetToken = await user.generatePasswordResetToken();
   await user.save();
-  console.log("🔑 Password reset token generated:", resetToken);
+  console.log(" Password reset token generated:", resetToken);
 
-  // ✅ Construct the correct URL
-  const resetPasswordURL = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
-  console.log("🔗 Complete Reset URL:", resetPasswordURL);
   
-  // ✅ Verify URL structure
+  const resetPasswordURL = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+  console.log(" Complete Reset URL:", resetPasswordURL);
+  
+ 
   const urlParts = resetPasswordURL.split('/');
-  console.log("🧩 URL Parts:", urlParts);
+  console.log(" URL Parts:", urlParts);
 
   const message = `Click the link to reset your password: ${resetPasswordURL}`;
   const subject = "Reset Your Password";
 
   try {
     await sendEmail(email, subject, message);
-    console.log("📬 Reset email sent to:", email);
-    console.log("📋 Email content:", { subject, resetPasswordURL });
+    console.log(" Reset email sent to:", email);
+    console.log(" Email content:", { subject, resetPasswordURL });
 
     res.status(200).json({
       success: true,
       message: `Reset password token has been sent to ${email} successfully`,
     });
   } catch (error) {
-    console.error("❌ Forgot password error:", error);
+    console.error(" Forgot password error:", error);
     user.forgotPasswordExpiry = undefined;
     user.forgotPasswordToken = undefined;
     await user.save();
@@ -190,7 +190,7 @@ const updateProfile = async (req, res, next) => {
         gravity: "faces",
         crop: "fill",
         resource_type: "auto",
-        timeout: 120000, // 2 minutes
+        timeout: 120000, 
       });
 
       console.log(" Cloudinary upload success:", result.secure_url);
@@ -200,7 +200,7 @@ const updateProfile = async (req, res, next) => {
         secure_url: result.secure_url,
       };
 
-      // local temp file delete
+      
       await fs.promises.rm(req.file.path);
     }
 

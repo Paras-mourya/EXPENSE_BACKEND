@@ -1,10 +1,10 @@
 import Goal from "../models/Goal.js";
 import AppError from "../utils/error.utils.js";
 
-// ✅ Get all goals of logged-in user
+
 const getGoals = async (req, res, next) => {
   try {
-    const goals = await Goal.find({ user: req.user._id }); // only current user's goals
+    const goals = await Goal.find({ user: req.user._id }); 
     res.status(200).json({
       success: true,
       message: "goals fetched successfully",
@@ -15,7 +15,7 @@ const getGoals = async (req, res, next) => {
   }
 };
 
-// ✅ Get goal by ID (only if belongs to logged-in user)
+
 const getGoalsById = async (req, res, next) => {
   try {
     const goalGet = await Goal.findOne({
@@ -37,7 +37,7 @@ const getGoalsById = async (req, res, next) => {
   }
 };
 
-// ✅ Create new goal (attach user id)
+
 const createGoals = async (req, res, next) => {
   try {
     const { title, targetAmount, currentAmount, deadline } = req.body;
@@ -51,10 +51,10 @@ const createGoals = async (req, res, next) => {
       targetAmount,
       currentAmount,
       deadline,
-      user: req.user._id, // attach logged-in user
+      user: req.user._id,
     });
 
-    // 🔔 Emit notification
+   
     req.io.emit("notification", {
       message: `New goal created: ${goal.title}`,
       time: new Date(),
@@ -70,7 +70,6 @@ const createGoals = async (req, res, next) => {
   }
 };
 
-// ✅ Update goal (only if belongs to logged-in user)
 const updateGoal = async (req, res, next) => {
   try {
     const updatedGoal = await Goal.findOneAndUpdate(
@@ -83,7 +82,7 @@ const updateGoal = async (req, res, next) => {
       return next(new AppError("goal not found or unauthorized", 400));
     }
 
-    // 🔔 Emit notification
+    
     req.io.emit("notification", {
       message: `Goal updated: ${updatedGoal.title}`,
       time: new Date(),
@@ -99,7 +98,6 @@ const updateGoal = async (req, res, next) => {
   }
 };
 
-// ✅ Delete goal (only if belongs to logged-in user)
 const deleteGoal = async (req, res, next) => {
   try {
     const goal = await Goal.findOneAndDelete({
@@ -111,7 +109,6 @@ const deleteGoal = async (req, res, next) => {
       return next(new AppError("goal not found or unauthorized", 400));
     }
 
-    // 🔔 Emit notification
     req.io.emit("notification", {
       message: `Goal deleted: ${goal.title}`,
       time: new Date(),
